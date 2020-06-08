@@ -11,7 +11,7 @@ The recorded audio can then be clipped into sounds for the soundboard via anothe
 2. Install [node.js](https://nodejs.org/), [python3](https://www.python.org/)
 3. Install vosk by running `pip install vosk`
 4. Download a vosk model from [this page](https://alphacephei.com/vosk/models.html) and unpack into `vosk/model`
-5. Create a new discord bot account [here](https://discord.com/developers/applications)
+5. Create a new discord bot account [here](https://discord.com/developers/applications), add your bot to your discord server
 6. Copy `.env.sample` to `.env`
 7. Configure the .env settings file
 8. Run `yarn` and `yarn start` in the project root directory
