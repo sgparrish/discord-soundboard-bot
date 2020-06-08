@@ -1,0 +1,9 @@
+node_modules
+.env
+dist
+*.log
+
+res
+recorded
+sounds.db
+vosk/model

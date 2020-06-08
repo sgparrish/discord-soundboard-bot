@@ -1,0 +1,119 @@
+h1 {
+  color: green;
+}
+
+body {
+  text-align: center;
+  margin: auto;
+}
+
+button.ui.button {
+  margin-bottom: 0.25em;
+}
+
+#root {
+  height: 100%;
+}
+
+.app {
+  height: 100%;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  overflow: hidden;
+}
+
+.soundboard-page {
+  height: 100%;
+  overflow: auto;
+}
+
+.clip-page {
+  height: 100%;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  grid-template-columns: 1fr 2fr;
+  grid-template-areas:
+    "transcript clip-control"
+    "transcript timeline";
+  overflow: hidden;
+}
+
+.clip-control {
+  grid-area: clip-control;
+}
+
+.transcript {
+  grid-area: transcript;
+}
+
+.timeline {
+  grid-area: timeline;
+}
+
+.user-label > * {
+  vertical-align: middle;
+}
+
+img.user-image {
+  border-radius: 50%;
+  margin-right: 5px;
+  width: 32px;
+}
+
+.comments {
+  overflow: auto;
+  width: 100%;
+}
+
+.ui.comments > .comment > .avatar > img {
+  border-radius: 50%;
+}
+
+.comments > .comment.highlight {
+  background: #ff8;
+}
+
+.comments > .comment.link {
+  cursor: pointer;
+}
+
+.comments > .comment > .content {
+  text-align: left;
+}
+
+.comments > .comment > .content > .author,
+.comments > .comment > .content > .metadata {
+  display: inline-block;
+}
+
+.comments > .comment > .content > .text {
+  display: block;
+}
+
+.clip-control {
+  text-align: center;
+}
+
+.clip-control .clip-comment {
+  display: inline-block;
+}
+
+.clip-control .control-buttons {
+  display: block;
+}
+
+.clip-control .clip-slider {
+  display: inline-block;
+  width: 50%;
+  max-width: 400px;
+  height: 40px;
+  margin-top: 20px;
+}
+
+.accordion .title {
+  display: flex;
+}
+
+.accordion .title > * {
+  align-self: center;
+}
