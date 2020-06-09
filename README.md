@@ -1,6 +1,6 @@
 # discord-soundboard-bot
 ## About
-This is a silly discord bot I made for my friends and my discord server. It allows you to upload sounds as you please and play them back into discord via a web interface.
+This is a silly discord bot I made for my discord server. It allows you to upload sounds as you please and play them back into discord via a web interface.
 
 The bot will also record every thing spoken in whatever channel it is in (provided discord.js hasn't broken that feature again). The recorded audio gets saved to a configured directory as well as a flat file "database". This audio is also run through speech to text software [vosk](https://github.com/alphacep/vosk-api).
 
