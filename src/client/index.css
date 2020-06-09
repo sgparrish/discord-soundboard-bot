@@ -60,6 +60,10 @@ img.user-image {
   width: 32px;
 }
 
+.timeline > div {
+  height: 100%;
+}
+
 .comments {
   overflow: auto;
   width: 100%;

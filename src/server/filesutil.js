@@ -2,11 +2,9 @@ const fs = require("fs");
 const path = require("path");
 const glob = require("glob");
 const Datastore = require("nedb");
-const prism = require("prism-media");
 const { v4: uuidv4 } = require("uuid");
 const { slice } = require("stream-slice");
-
-const VoskDriver = require("./vosk");
+const child = require("duplex-child-process");
 
 const db = new Datastore({ filename: process.env.DB_FILE, autoload: true });
 
@@ -75,22 +73,43 @@ class FilesUtil {
     return { basename: path.basename(filename), dirname: path.dirname(filename) };
   }
 
+  static ffmpeg(args, options) {
+    return child.spawn(process.env.FFMPEG, args, options);
+  }
+
+  static getVosk() {
+    return child.spawn(process.env.VOSK_PYTHON, [
+      path.join(process.env.VOSK_SCRIPT),
+      path.join(process.env.VOSK_MODEL),
+    ]);
+  }
+
   static ffmpegToMp3() {
-    return new prism.FFmpeg({
-      args: ["-f", "s16le", "-ac", "2", "-ar", "48000", "-i", "pipe:0", "-f", "mp3"],
-    });
+    return this.ffmpeg(["-f", "s16le", "-ac", "2", "-ar", "48000", "-i", "pipe:0", "-f", "mp3", "pipe:1"]);
   }
 
   static ffmpegToPcm() {
-    return new prism.FFmpeg({
-      args: ["-f", "mp3", "-i", "pipe:0", "-f", "s16le", "-ac", "2", "-ar", "48000"],
-    });
+    return this.ffmpeg(["-f", "mp3", "-i", "pipe:0", "-f", "s16le", "-ac", "2", "-ar", "48000", "pipe:1"]);
   }
 
   static ffmpegToLowRatePcm() {
-    return new prism.FFmpeg({
-      args: ["-f", "s16le", "-ac", "2", "-ar", "48000", "-i", "pipe:0", "-f", "s16le", "-ac", "1", "-ar", "16000"],
-    });
+    return this.ffmpeg([
+      "-f",
+      "s16le",
+      "-ac",
+      "2",
+      "-ar",
+      "48000",
+      "-i",
+      "pipe:0",
+      "-f",
+      "s16le",
+      "-ac",
+      "1",
+      "-ar",
+      "16000",
+      "pipe:1",
+    ]);
   }
 
   static saveRecording(member, stream) {
@@ -125,15 +144,28 @@ class FilesUtil {
 
     if (voskEnabled) {
       const ffmpegLowRatePcm = this.ffmpegToLowRatePcm();
-      const vosk = new VoskDriver();
+      const vosk = this.getVosk();
 
       const chunks = [];
       vosk.on("data", (chunk) => {
         chunks.push(chunk);
       });
       vosk.on("end", () => {
-        text = JSON.parse(Buffer.concat(chunks).toString("utf8")).text;
+        try {
+          text = JSON.parse(Buffer.concat(chunks).toString("utf8")).text;
+        } catch {
+          text = "...";
+        }
 
+        db.insert({
+          _id,
+          userId,
+          start,
+          end,
+          text: text || "...",
+        });
+      });
+      vosk.on("error", () => {
         db.insert({
           _id,
           userId,
