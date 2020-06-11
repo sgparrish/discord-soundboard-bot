@@ -22,7 +22,7 @@ const SoundSet = ({ soundset, index, user, active, handleClick }) => {
             key={sound}
             size={"mini"}
             onClick={React.useCallback(() => {
-              fetch("/api/play/" + soundset.category + "/" + sound);
+              fetch(`/api/sound/play/published/${soundset.category}/${sound}`);
             })}
           >
             {sound}

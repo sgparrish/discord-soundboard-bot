@@ -6,13 +6,12 @@ const { v4: uuidv4 } = require("uuid");
 const { slice } = require("stream-slice");
 const child = require("duplex-child-process");
 
-const db = new Datastore({ filename: process.env.DB_FILE, autoload: true });
+const soundDb = new Datastore({ filename: process.env.DB_FILE, autoload: true });
+
+let voskRunning = false;
+const listenQueue = [];
 
 class FilesUtil {
-  static getDb() {
-    return db;
-  }
-
   static getStartupSound() {
     return process.env.STARTUP_SOUND || "startup.mp3";
   }
@@ -41,7 +40,8 @@ class FilesUtil {
 
   static getRecordedSounds() {
     return new Promise((resolve) => {
-      db.find({})
+      soundDb
+        .find({})
         .sort({ start: 1 })
         .exec((err, docs) => {
           resolve(docs);
@@ -92,24 +92,13 @@ class FilesUtil {
     return this.ffmpeg(["-f", "mp3", "-i", "pipe:0", "-f", "s16le", "-ac", "2", "-ar", "48000", "pipe:1"]);
   }
 
+  static ffmpegMp3ToLowRatePcm() {
+    return this.ffmpeg(["-f", "mp3", "-i", "pipe:0", "-f", "s16le", "-ac", "1", "-ar", "16000", "pipe:1"]);
+  }
+
   static ffmpegToLowRatePcm() {
-    return this.ffmpeg([
-      "-f",
-      "s16le",
-      "-ac",
-      "2",
-      "-ar",
-      "48000",
-      "-i",
-      "pipe:0",
-      "-f",
-      "s16le",
-      "-ac",
-      "1",
-      "-ar",
-      "16000",
-      "pipe:1",
-    ]);
+    // prettier-ignore
+    return this.ffmpeg(["-f", "s16le", "-ac", "2", "-ar", "48000", "-i", "pipe:0", "-f", "s16le", "-ac", "1", "-ar", "16000", "pipe:1"]);
   }
 
   static saveRecording(member, stream) {
@@ -131,52 +120,15 @@ class FilesUtil {
 
     stream.on("end", () => {
       end = new Date();
-      if (!voskEnabled) {
-        db.insert({
-          _id,
-          userId,
-          start,
-          end,
-          text,
-        });
-      }
+      if (voskEnabled) listenQueue.push({ userId, soundId: _id });
+      soundDb.insert({
+        _id,
+        userId,
+        start,
+        end,
+        text,
+      });
     });
-
-    if (voskEnabled) {
-      const ffmpegLowRatePcm = this.ffmpegToLowRatePcm();
-      const vosk = this.getVosk();
-
-      const chunks = [];
-      vosk.on("data", (chunk) => {
-        chunks.push(chunk);
-      });
-      vosk.on("end", () => {
-        try {
-          text = JSON.parse(Buffer.concat(chunks).toString("utf8")).text;
-        } catch {
-          text = "...";
-        }
-
-        db.insert({
-          _id,
-          userId,
-          start,
-          end,
-          text: text || "...",
-        });
-      });
-      vosk.on("error", () => {
-        db.insert({
-          _id,
-          userId,
-          start,
-          end,
-          text: text || "...",
-        });
-      });
-
-      stream.pipe(ffmpegLowRatePcm).pipe(vosk);
-    }
     stream.pipe(ffmpegMp3).pipe(mp3Stream);
   }
 
@@ -213,7 +165,7 @@ class FilesUtil {
     const fileMaxAge = Number.parseInt(process.env.FILE_MAX_AGE_MILLISECONDS) || 1 * 24 * 60 * 60 * 1000;
     const cutoff = new Date(new Date().getTime() - fileMaxAge);
     const query = { start: { $lt: cutoff } };
-    db.find(query, (err, docs) => {
+    soundDb.find(query, (err, docs) => {
       // delete mp3 files
       docs.forEach((doc) => {
         const mp3File = this.getRecordedFilename(doc.userId, doc._id);
@@ -222,9 +174,65 @@ class FilesUtil {
         });
       });
       // remove db records
-      db.remove(query, { multi: true }, (err, numRemoved) => {
+      soundDb.remove(query, { multi: true }, (err, numRemoved) => {
         // clean up db
-        db.persistence.compactDatafile();
+        soundDb.persistence.compactDatafile();
+      });
+    });
+  }
+
+  static initializeVoskQueue() {
+    soundDb
+      .find({ text: "" })
+      .sort({ start: 1 })
+      .exec((err, docs) => {
+        docs.forEach((sound) => listenQueue.push({ userId: sound.userId, soundId: sound._id }));
+      });
+    setInterval(this.voskPoll.bind(this), 250);
+  }
+
+  static voskPoll() {
+    if (!voskRunning) {
+      const sound = listenQueue.shift();
+      if (sound) {
+        voskRunning = true;
+        this.voskListen(sound.userId, sound.soundId).finally(() => {
+          voskRunning = false;
+        });
+      }
+    }
+  }
+
+  static voskListen(userId, soundId) {
+    return new Promise((resolve, reject) => {
+      soundDb.find({ _id: soundId }, (err, [sound]) => {
+        const filename = this.getRecordedFilename(sound.userId, sound._id);
+        const inStream = fs.createReadStream(filename);
+        const ffmpegPcm = this.ffmpegMp3ToLowRatePcm();
+        const vosk = this.getVosk();
+
+        const chunks = [];
+        vosk.on("data", (chunk) => {
+          chunks.push(chunk);
+        });
+        vosk.on("end", () => {
+          let text = "";
+          try {
+            text = JSON.parse(Buffer.concat(chunks).toString("utf8")).text || "???";
+          } catch {
+            text = "???";
+          }
+
+          soundDb.update({ _id: soundId }, { $set: { text } }, {}, () => {
+            resolve(soundId);
+          });
+        });
+        vosk.on("error", (err) => {
+          console.log("vosk error:" + err);
+          resolve(soundId);
+        });
+
+        inStream.pipe(ffmpegPcm).pipe(vosk);
       });
     });
   }

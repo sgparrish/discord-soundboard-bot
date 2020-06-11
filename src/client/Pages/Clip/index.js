@@ -10,7 +10,7 @@ const ClipPage = ({ match }) => {
   const [sounds, setSounds] = React.useState([]);
 
   React.useEffect(() => {
-    fetch("/api/recorded").then((res) =>
+    fetch("/api/sounds/recorded").then((res) =>
       res.json().then((data) => {
         setUsers(data.users);
         setSounds(

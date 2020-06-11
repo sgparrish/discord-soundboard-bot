@@ -97,6 +97,10 @@ const ClipControl = ({ users, sounds }) => {
       });
   }, [userId, soundId, times, soundName, history, setModalOpen, setCreatingSound]);
 
+  const playToDiscord = React.useCallback(() => {
+    fetch(`/api/sound/play/recorded/${userId}/${soundId}`);
+  });
+
   return (
     <div className="clip-control">
       <div className="clip-comment">
@@ -105,9 +109,10 @@ const ClipControl = ({ users, sounds }) => {
         </Comment.Group>
       </div>
       <Button.Group icon className="control-buttons">
-        <Button icon="play" loading={loadingSound} disabled={!audioBuffer} onClick={play} />
-        <Button icon="stop" loading={loadingSound} disabled={!audioBuffer} onClick={stop} />
-        <Button icon="cut" loading={loadingSound} disabled={!audioBuffer} onClick={toggleModal} />
+        <Button icon="play" title="Play sound" loading={loadingSound} disabled={!audioBuffer} onClick={play} />
+        <Button icon="stop" title="Stop sound" loading={loadingSound} disabled={!audioBuffer} onClick={stop} />
+        <Button icon="cut" title="Cut sound" loading={loadingSound} disabled={!audioBuffer} onClick={toggleModal} />
+        <Button icon="discord" title="Play sound to Discord" loading={loadingSound} disabled={!audioBuffer} onClick={playToDiscord} />
       </Button.Group>
       <div className="clip-slider">
         <SoundSlider duration={audioBuffer ? audioBuffer.duration : 60} times={times} setTimes={setTimes} />

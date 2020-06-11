@@ -11,6 +11,8 @@ const discordClient = new DiscordClient();
 schedule.scheduleJob("0 * * * *", FilesUtil.deleteOldFiles);
 FilesUtil.deleteOldFiles();
 
+if (process.env.VOSK_ENABLED.toLowerCase().startsWith("t")) FilesUtil.initializeVoskQueue();
+
 server.use(express.json());
 server.use(express.static("dist"));
 
@@ -26,14 +28,7 @@ server.get("/api/sounds", (req, res) => {
   });
 });
 
-server.get("/api/play/:user/:soundname", (req, res) => {
-  const { user, soundname } = req.params;
-  const sound = FilesUtil.getSoundFilename(user, soundname);
-  discordClient.playSound(sound);
-  res.status(204).send();
-});
-
-server.get("/api/recorded", (req, res) => {
+server.get("/api/sounds/recorded", (req, res) => {
   FilesUtil.getRecordedSounds().then((sounds) => {
     const userIds = sounds.map((sound) => sound.userId).filter((value, index, self) => self.indexOf(value) === index);
     discordClient.getUserMetadata(userIds).then((users) => {
@@ -43,6 +38,16 @@ server.get("/api/recorded", (req, res) => {
       });
     });
   });
+});
+
+server.get("/api/sound/play/:type/:user/:soundname", (req, res) => {
+  const { type, user, soundname } = req.params;
+  const sound =
+    type.toLowerCase() === "recorded"
+      ? FilesUtil.getRecordedFilename(user, soundname)
+      : FilesUtil.getSoundFilename(user, soundname);
+  discordClient.playSound(sound);
+  res.status(204).send();
 });
 
 server.get("/api/sound/:userId/:soundId", (req, res) => {
