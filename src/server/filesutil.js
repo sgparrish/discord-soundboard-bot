@@ -168,7 +168,7 @@ class FilesUtil {
     soundDb.find(query, (err, docs) => {
       // delete mp3 files
       docs.forEach((doc) => {
-        const mp3File = this.getRecordedFilename(doc.userId, doc._id);
+        const mp3File = FilesUtil.getRecordedFilename(doc.userId, doc._id);
         fs.unlink(mp3File, (err) => {
           if (err) console.log("Error removing file: " + mp3File);
         });
