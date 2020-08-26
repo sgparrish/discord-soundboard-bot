@@ -17,7 +17,7 @@ const SoundSet = ({ soundset, index, user, active, handleClick }) => {
         {label}
       </Accordion.Title>
       <Accordion.Content active={active}>
-        {soundset.sounds.map((sound) => (
+        {soundset.sounds.map(({sound}) => (
           <Button
             key={sound}
             size={"mini"}

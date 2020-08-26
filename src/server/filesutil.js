@@ -8,6 +8,8 @@ const child = require("duplex-child-process");
 
 const soundDb = new Datastore({ filename: process.env.DB_FILE, autoload: true });
 
+const timeSort = (a, b) => b.time - a.time;
+
 let voskRunning = false;
 const listenQueue = [];
 
@@ -28,11 +30,13 @@ class FilesUtil {
           if (!soundSets.some((set) => set.category === category)) {
             soundSets.push({ category, sounds: [] });
           }
-          soundSets.find((set) => set.category === category).sounds.push(sound);
+          soundSets.find((set) => set.category === category).sounds.push({sound, time: fs.statSync(soundPath).mtime});
 
           return soundSets;
         }, []);
 
+        // Fugly date sorting xD
+        sets.forEach(set => set.sounds.sort(timeSort));
         resolve(sets);
       });
     });
@@ -42,7 +46,7 @@ class FilesUtil {
     return new Promise((resolve) => {
       soundDb
         .find({})
-        .sort({ start: 1 })
+        .sort({ start: -1 })
         .exec((err, docs) => {
           resolve(docs);
         });
