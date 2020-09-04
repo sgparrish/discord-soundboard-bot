@@ -25,10 +25,7 @@ class DiscordClient {
 
     // Join first available voice channel in first server
     this.server = Array.from(this.client.guilds.cache.values())[0];
-    Array.from(this.server.channels.cache.values())
-      .find((c) => c.type === "voice" && c.joinable)
-      .join()
-      .then(() => this.playSound(FilesUtil.getStartupSound()));
+    this.connect();
   }
 
   initializeMessages() {
@@ -45,7 +42,10 @@ class DiscordClient {
           });
         });
         dmChannel
-          .send("s o u n d b o a r d operational. Press ❌ to exit. " + process.env.DISCORD_BOT_MSG)
+          .send(
+            "s o u n d b o a r d operational. Press ❌ to exit. Press 👋 to join your channel." +
+              process.env.DISCORD_BOT_MSG
+          )
           .then((message) => {
             message.react("❌");
             message
@@ -59,8 +59,28 @@ class DiscordClient {
                   process.exit();
                 });
               });
+
+            message.react("🔄");
+            message
+              .awaitReactions(
+                (reaction, user) => reaction.emoji.name === "🔄" && user.id === process.env.DISCORD_BOT_OWNER,
+                { max: 1 }
+              )
+              .then((collected) => {
+                message.delete().then(() => {
+                  this.initializeMessages();
+                  this.client.voice.connections.each((connection) => connection.disconnect());
+                  this.connect();
+                });
+              });
           });
       });
+  }
+
+  connect() {
+    const channels = Array.from(this.server.channels.cache.values()).filter((c) => c.type === "voice" && c.joinable);
+    channels.sort((a, b) => b.members.array().length - a.members.array().length);
+    channels[0].join().then(() => this.playSound(FilesUtil.getStartupSound()));
   }
 
   onMessage(message) {
