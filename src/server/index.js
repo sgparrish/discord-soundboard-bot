@@ -67,4 +67,4 @@ server.post("/api/sound/cut", (req, res) => {
 server.get("*", (req, res) => res.sendFile("index.html", { root: "dist" }));
 
 const port = process.env.PORT || 8080;
-server.listen(port, () => console.log(`Listening on port ${port} :)`));
+server.listen(port, '0.0.0.0', () => console.log(`Listening on port ${port} :)`));
