@@ -1,5 +1,6 @@
 require("dotenv").config();
 const express = require("express");
+var compression = require('compression');
 const schedule = require("node-schedule");
 
 const FilesUtil = require("./filesutil");
@@ -11,8 +12,9 @@ const discordClient = new DiscordClient();
 schedule.scheduleJob("0 * * * *", FilesUtil.deleteOldFiles);
 FilesUtil.deleteOldFiles();
 
-if (process.env.VOSK_ENABLED.toLowerCase().startsWith("t")) FilesUtil.initializeVoskQueue();
+if (process.env.VOSK_ENABLED.toLowerCase().startsWith("t")) FilesUtil.initializeVosk();
 
+server.use(compression());
 server.use(express.json());
 server.use(express.static("dist"));
 
@@ -21,7 +23,7 @@ server.get("/api/sounds", (req, res) => {
     const userIds = sounds.map((sound) => sound.category).filter((value, index, self) => self.indexOf(value) === index);
     discordClient.getUserMetadata(userIds).then((users) => {
       res.json({
-        users,
+        users: users.map(x => x.value),
         sounds,
       });
     });
@@ -33,7 +35,7 @@ server.get("/api/sounds/recorded", (req, res) => {
     const userIds = sounds.map((sound) => sound.userId).filter((value, index, self) => self.indexOf(value) === index);
     discordClient.getUserMetadata(userIds).then((users) => {
       res.json({
-        users,
+        users: users.map(x => x.value),
         sounds,
       });
     });

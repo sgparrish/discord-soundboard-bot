@@ -16,6 +16,7 @@
   "dependencies": {
     "@discordjs/opus": "^0.3.2",
     "babel-polyfill": "^6.26.0",
+    "compression": "^1.7.4",
     "discord.js": "^12.2.0",
     "dotenv": "^8.2.0",
     "duplex-child-process": "^1.0.0",

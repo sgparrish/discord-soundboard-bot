@@ -23,6 +23,9 @@ class DiscordClient {
     // Clear old messages
     this.initializeMessages();
 
+    // Setup channel check
+    setInterval(this.checkChannels.bind(this), 1000 * 5);
+
     // Join first available voice channel in first server
     this.server = Array.from(this.client.guilds.cache.values())[0];
     this.connect();
@@ -33,8 +36,8 @@ class DiscordClient {
     // this just deletes all messages the bot has sent to the owner user
     // then sends one with a reaction that can be used to kill the bot
     this.client.users
-      .resolve(process.env.DISCORD_BOT_OWNER)
-      .createDM()
+      .fetch(process.env.DISCORD_BOT_OWNER)
+      .then((user) => user.createDM())
       .then((dmChannel) => {
         dmChannel.messages.fetch().then((messages) => {
           messages.forEach((message) => {
@@ -43,7 +46,7 @@ class DiscordClient {
         });
         dmChannel
           .send(
-            "s o u n d b o a r d operational. Press ❌ to exit. Press 👋 to join your channel." +
+            "s o u n d b o a r d operational. Press ❌ to exit. Press 🔄 to refresh connection." +
               process.env.DISCORD_BOT_MSG
           )
           .then((message) => {
@@ -56,6 +59,7 @@ class DiscordClient {
               .then((collected) => {
                 message.delete().then(() => {
                   this.client.destroy();
+                  FilesUtil.killVosk();
                   process.exit();
                 });
               });
@@ -67,20 +71,15 @@ class DiscordClient {
                 { max: 1 }
               )
               .then((collected) => {
-                message.delete().then(() => {
-                  this.initializeMessages();
-                  this.client.voice.connections.each((connection) => connection.disconnect());
-                  this.connect();
-                });
+                this.client.voice.connections.each((connection) => connection.disconnect());
+                this.connect();
               });
           });
       });
   }
 
   connect() {
-    const channels = Array.from(this.server.channels.cache.values()).filter((c) => c.type === "voice" && c.joinable);
-    channels.sort((a, b) => b.members.array().length - a.members.array().length);
-    channels[0].join().then(() => this.playSound(FilesUtil.getStartupSound()));
+    this.getMostPopulatedChannel().join().then(() => this.playSound(FilesUtil.getStartupSound()));
   }
 
   onMessage(message) {
@@ -117,21 +116,32 @@ class DiscordClient {
   }
 
   getUserMetadata(userIds) {
-    return new Promise((resolve, reject) => {
-      resolve(
-        userIds
-          .map((id) => {
-            const member = this.server.members.resolve(id);
-            if (!member) return { id };
-            return {
-              id: member.id,
-              name: member.displayName,
-              image: member.user.displayAvatarURL({ format: "png", dynamic: false, size: 32 }),
-            };
-          })
-          .filter((user) => user !== null)
-      );
-    });
+    return Promise.allSettled(
+      userIds.map((id) =>
+        this.server.members
+          .fetch(id)
+          .then((member) => ({
+            id: member.id,
+            name: member.displayName,
+            image: member.user.displayAvatarURL({ format: "png", dynamic: false, size: 32 }),
+          }))
+          .catch((error) => ({ id }))
+      )
+    );
+  }
+
+  getMostPopulatedChannel() {
+    const channels = Array.from(this.server.channels.cache.values()).filter((c) => c.type === "voice" && c.joinable);
+    channels.sort((a, b) => b.members.array().length - a.members.array().length);
+    return channels[0];
+  }
+
+  checkChannels() {
+    const voice = this.server.me.voice;
+    if (!voice.channel || voice.channel.members.size === 1) {
+      this.client.voice.connections.each((connection) => connection.disconnect());
+      this.connect();
+    }
   }
 }
 

@@ -1,17 +1,18 @@
 const fs = require("fs");
+const net = require("net");
 const path = require("path");
 const glob = require("glob");
 const Datastore = require("nedb");
 const { v4: uuidv4 } = require("uuid");
 const { slice } = require("stream-slice");
+const { spawn } = require("child_process");
 const child = require("duplex-child-process");
 
 const soundDb = new Datastore({ filename: process.env.DB_FILE, autoload: true });
 
 const timeSort = (a, b) => b.time - a.time;
 
-let voskRunning = false;
-const listenQueue = [];
+let voskProcess = null;
 
 class FilesUtil {
   static getStartupSound() {
@@ -30,13 +31,13 @@ class FilesUtil {
           if (!soundSets.some((set) => set.category === category)) {
             soundSets.push({ category, sounds: [] });
           }
-          soundSets.find((set) => set.category === category).sounds.push({sound, time: fs.statSync(soundPath).mtime});
+          soundSets.find((set) => set.category === category).sounds.push({ sound, time: fs.statSync(soundPath).mtime });
 
           return soundSets;
         }, []);
 
         // Fugly date sorting xD
-        sets.forEach(set => set.sounds.sort(timeSort));
+        sets.forEach((set) => set.sounds.sort(timeSort));
         resolve(sets);
       });
     });
@@ -81,13 +82,6 @@ class FilesUtil {
     return child.spawn(process.env.FFMPEG, args, options);
   }
 
-  static getVosk() {
-    return child.spawn(process.env.VOSK_PYTHON, [
-      path.join(process.env.VOSK_SCRIPT),
-      path.join(process.env.VOSK_MODEL),
-    ]);
-  }
-
   static ffmpegToMp3() {
     return this.ffmpeg(["-f", "s16le", "-ac", "2", "-ar", "48000", "-i", "pipe:0", "-f", "mp3", "pipe:1"]);
   }
@@ -124,7 +118,6 @@ class FilesUtil {
 
     stream.on("end", () => {
       end = new Date();
-      if (voskEnabled) listenQueue.push({ userId, soundId: _id });
       soundDb.insert({
         _id,
         userId,
@@ -132,6 +125,7 @@ class FilesUtil {
         end,
         text,
       });
+      if (voskEnabled) this.voskListen(_id);
     });
     stream.pipe(ffmpegMp3).pipe(mp3Stream);
   }
@@ -185,58 +179,51 @@ class FilesUtil {
     });
   }
 
-  static initializeVoskQueue() {
-    soundDb
-      .find({ text: "" })
-      .sort({ start: 1 })
-      .exec((err, docs) => {
-        docs.forEach((sound) => listenQueue.push({ userId: sound.userId, soundId: sound._id }));
-      });
-    setInterval(this.voskPoll.bind(this), 250);
+  static initializeVosk() {
+    voskProcess = spawn(process.env.VOSK_PYTHON, [
+      path.join(process.env.VOSK_SCRIPT),
+      path.join(process.env.VOSK_MODEL),
+      path.join(process.env.FFMPEG),
+    ]);
   }
 
-  static voskPoll() {
-    if (!voskRunning) {
-      const sound = listenQueue.shift();
-      if (sound) {
-        voskRunning = true;
-        this.voskListen(sound.userId, sound.soundId).finally(() => {
-          voskRunning = false;
-        });
-      }
-    }
+  static killVosk() {
+    voskProcess.kill("SIGINT");
   }
 
-  static voskListen(userId, soundId) {
+  static voskListen(soundId) {
     return new Promise((resolve, reject) => {
+      if (voskProcess === null || voskProcess.exitCode !== null) {
+        this.initializeVosk();
+      }
+
       soundDb.find({ _id: soundId }, (err, [sound]) => {
         const filename = this.getRecordedFilename(sound.userId, sound._id);
-        const inStream = fs.createReadStream(filename);
-        const ffmpegPcm = this.ffmpegMp3ToLowRatePcm();
-        const vosk = this.getVosk();
 
-        const chunks = [];
-        vosk.on("data", (chunk) => {
-          chunks.push(chunk);
+        const socket = new net.Socket();
+        socket.on("error", (err) => {
+          console.log("vosk connection failed: ", err);
+          reject(err);
         });
-        vosk.on("end", () => {
-          let text = "";
-          try {
-            text = JSON.parse(Buffer.concat(chunks).toString("utf8")).text || "???";
-          } catch {
-            text = "???";
-          }
-
-          soundDb.update({ _id: soundId }, { $set: { text } }, {}, () => {
-            resolve(soundId);
+        socket.on("connect", () => {
+          let chunks = [];
+          socket.on("data", (chunk) => {
+            chunks.push(chunk);
           });
+          socket.on("close", () => {
+            let text = "";
+            try {
+              text = JSON.parse(Buffer.concat(chunks).toString("utf8")).text || "???";
+            } catch {
+              text = "???";
+            }
+            soundDb.update({ _id: soundId }, { $set: { text } }, {}, () => {
+              resolve(soundId);
+            });
+          });
+          socket.write(filename + "\n");
         });
-        vosk.on("error", (err) => {
-          console.log("vosk error:" + err);
-          resolve(soundId);
-        });
-
-        inStream.pipe(ffmpegPcm).pipe(vosk);
+        socket.connect({ port: 9999 });
       });
     });
   }
