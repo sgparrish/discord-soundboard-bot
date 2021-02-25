@@ -13,6 +13,8 @@ const soundDb = new Datastore({ filename: process.env.DB_FILE, autoload: true })
 const timeSort = (a, b) => b.time - a.time;
 
 let voskProcess = null;
+let voskRunning = false;
+const voskQueue = [];
 
 class FilesUtil {
   static getStartupSound() {
@@ -125,7 +127,7 @@ class FilesUtil {
         end,
         text,
       });
-      if (voskEnabled) this.voskListen(_id);
+      if (voskEnabled) voskQueue.push(_id);
     });
     stream.pipe(ffmpegMp3).pipe(mp3Stream);
   }
@@ -185,10 +187,34 @@ class FilesUtil {
       path.join(process.env.VOSK_MODEL),
       path.join(process.env.FFMPEG),
     ]);
+    setTimeout(this.initializeVoskQueue.bind(this), 10000);
   }
 
   static killVosk() {
     voskProcess.kill("SIGINT");
+  }
+
+  static initializeVoskQueue() {
+    soundDb
+      .find({ text: "" })
+      .sort({ start: 1 })
+      .exec((err, docs) => {
+        docs.forEach((sound) => voskQueue.push(sound._id));
+      });
+    setInterval(this.consumeVoskQueue.bind(this), 250);
+  }
+
+  static consumeVoskQueue() {
+    if (!voskRunning) {
+      const soundId = voskQueue.shift();
+      if (soundId) {
+        voskRunning = true;
+        this.voskListen(soundId).finally(() => {
+          voskRunning = false;
+          setTimeout(this.consumeVoskQueue.bind(this), 0);
+        });
+      }
+    }
   }
 
   static voskListen(soundId) {
