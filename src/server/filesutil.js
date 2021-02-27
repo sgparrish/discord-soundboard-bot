@@ -170,7 +170,7 @@ class FilesUtil {
       docs.forEach((doc) => {
         const mp3File = FilesUtil.getRecordedFilename(doc.userId, doc._id);
         fs.unlink(mp3File, (err) => {
-          if (err) console.log("Error removing file: " + mp3File);
+          if (err) console.error("Error removing file: " + mp3File);
         });
       });
       // remove db records
@@ -187,6 +187,8 @@ class FilesUtil {
       path.join(process.env.VOSK_MODEL),
       path.join(process.env.FFMPEG),
     ]);
+    voskProcess.stdout.pipe(process.stdout);
+    voskProcess.stderr.pipe(process.stderr);
     setTimeout(this.initializeVoskQueue.bind(this), 10000);
   }
 
@@ -211,7 +213,7 @@ class FilesUtil {
         voskRunning = true;
         this.voskListen(soundId).finally(() => {
           voskRunning = false;
-          setTimeout(this.consumeVoskQueue.bind(this), 0);
+          setTimeout(this.consumeVoskQueue.bind(this), 5);
         });
       }
     }
@@ -228,7 +230,7 @@ class FilesUtil {
 
         const socket = new net.Socket();
         socket.on("error", (err) => {
-          console.log("vosk connection failed: ", err);
+          console.error("Vosk connection failed: ", err);
           reject(err);
         });
         socket.on("connect", () => {

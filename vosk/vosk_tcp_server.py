@@ -16,8 +16,6 @@ class VoskTCPServer(socketserver.StreamRequestHandler):
         message = self.rfile.readline().decode("utf-8").replace("\n", "")
         if message == "die":
           os._exit(0)
-        elif message == "beep":
-          self.request.sendall(str.encode("boop\n"))
         else:
           if not os.path.exists(message):
             self.request.sendall(str.encode("fail"))
@@ -27,10 +25,7 @@ class VoskTCPServer(socketserver.StreamRequestHandler):
           self.request.sendall(str.encode(rec.FinalResult()))
           self.request.close()
 
-
 if __name__ == "__main__":
-    SetLogLevel(-1)
-
     HOST, PORT = "localhost", 9999
     if len(sys.argv) < 3:
       print(sys.argv[0] + " <model dir> <ffmpeg path>")

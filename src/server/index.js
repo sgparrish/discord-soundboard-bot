@@ -1,6 +1,6 @@
 require("dotenv").config();
 const express = require("express");
-var compression = require('compression');
+var compression = require("compression");
 const schedule = require("node-schedule");
 
 const FilesUtil = require("./filesutil");
@@ -19,27 +19,39 @@ server.use(express.json());
 server.use(express.static("dist"));
 
 server.get("/api/sounds", (req, res) => {
-  FilesUtil.getSoundList().then((sounds) => {
-    const userIds = sounds.map((sound) => sound.category).filter((value, index, self) => self.indexOf(value) === index);
-    discordClient.getUserMetadata(userIds).then((users) => {
-      res.json({
-        users: users.map(x => x.value),
-        sounds,
-      });
-    });
-  });
+  FilesUtil.getSoundList()
+    .then((sounds) => {
+      const userIds = sounds
+        .map((sound) => sound.category)
+        .filter((value, index, self) => self.indexOf(value) === index);
+      discordClient
+        .getUserMetadata(userIds)
+        .then((users) =>
+          res.json({
+            users: users.map((x) => x.value),
+            sounds,
+          })
+        )
+        .catch((err) => res.status(500).json({ error: err }));
+    })
+    .catch((err) => res.status(500).json({ error: err }));
 });
 
 server.get("/api/sounds/recorded", (req, res) => {
-  FilesUtil.getRecordedSounds().then((sounds) => {
-    const userIds = sounds.map((sound) => sound.userId).filter((value, index, self) => self.indexOf(value) === index);
-    discordClient.getUserMetadata(userIds).then((users) => {
-      res.json({
-        users: users.map(x => x.value),
-        sounds,
-      });
-    });
-  });
+  FilesUtil.getRecordedSounds()
+    .then((sounds) => {
+      const userIds = sounds.map((sound) => sound.userId).filter((value, index, self) => self.indexOf(value) === index);
+      discordClient
+        .getUserMetadata(userIds)
+        .then((users) =>
+          res.json({
+            users: users.map((x) => x.value),
+            sounds,
+          })
+        )
+        .catch((err) => res.status(500).json({ error: err }));
+    })
+    .catch((err) => res.status(500).json({ error: err }));
 });
 
 server.get("/api/sound/play/:type/:user/:soundname", (req, res) => {
@@ -69,4 +81,4 @@ server.post("/api/sound/cut", (req, res) => {
 server.get("*", (req, res) => res.sendFile("index.html", { root: "dist" }));
 
 const port = process.env.PORT || 8080;
-server.listen(port, '0.0.0.0', () => console.log(`Listening on port ${port} :)`));
+server.listen(port, "0.0.0.0", () => console.log(`Listening on port ${port} :)`));

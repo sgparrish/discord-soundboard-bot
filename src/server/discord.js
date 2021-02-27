@@ -16,19 +16,22 @@ class DiscordClient {
   }
 
   onReady() {
-    // Set up handlers
-    this.client.on("message", this.onMessage.bind(this));
-    this.client.on("guildMemberSpeaking", this.onMemberSpeaking.bind(this));
+    // Resolve server from id, or just use first available
+    this.client.guilds
+      .fetch(process.env.DISCORD_BOT_SERVER)
+      .then((guild) => (this.server = guild))
+      .catch((this.server = Array.from(this.client.guilds.cache.values())[0]))
+      .finally(() => {
+        // Set up handlers
+        this.client.on("message", this.onMessage.bind(this));
+        this.client.on("guildMemberSpeaking", this.onMemberSpeaking.bind(this));
 
-    // Clear old messages
-    this.initializeMessages();
+        // Clear old messages
+        this.initializeMessages();
 
-    // Setup channel check
-    setInterval(this.checkChannels.bind(this), 1000 * 5);
-
-    // Join first available voice channel in first server
-    this.server = Array.from(this.client.guilds.cache.values())[0];
-    this.connect();
+        // Setup channel check
+        setInterval(this.checkChannels.bind(this), 1000 * 5);
+      });
   }
 
   initializeMessages() {
@@ -46,8 +49,7 @@ class DiscordClient {
         });
         dmChannel
           .send(
-            "s o u n d b o a r d operational. Press ❌ to exit. Press 🔄 to refresh connection." +
-              process.env.DISCORD_BOT_MSG
+            "s o u n d b o a r d operational. Press ❌ to exit. Press 🔌 to disconnect." + process.env.DISCORD_BOT_MSG
           )
           .then((message) => {
             message.react("❌");
@@ -57,29 +59,45 @@ class DiscordClient {
                 { max: 1 }
               )
               .then((collected) => {
-                message.delete().then(() => {
-                  this.client.destroy();
-                  FilesUtil.killVosk();
-                  process.exit();
-                });
-              });
+                message
+                  .delete()
+                  .catch((err) => console.error("Delete msg failed: ", err))
+                  .finally(() => {
+                    this.client.destroy();
+                    FilesUtil.killVosk();
+                    process.exit();
+                  });
+              })
+              .catch((err) => console.error("❌ Collector failed: ", err));
 
-            message.react("🔄");
+            message.react("🔌");
             message
               .awaitReactions(
-                (reaction, user) => reaction.emoji.name === "🔄" && user.id === process.env.DISCORD_BOT_OWNER,
+                (reaction, user) => reaction.emoji.name === "🔌" && user.id === process.env.DISCORD_BOT_OWNER,
                 { max: 1 }
               )
               .then((collected) => {
-                this.client.voice.connections.each((connection) => connection.disconnect());
-                this.connect();
-              });
+                this.disconnect();
+                setInterval(this.initializeMessages.bind(this), 500);
+              })
+              .catch((err) => console.error("🔌 Collector failed: ", err));
           });
-      });
+      })
+      .catch((err) => console.error("Message failed: ", err));
   }
 
   connect() {
-    this.getMostPopulatedChannel().join().then(() => this.playSound(FilesUtil.getStartupSound()));
+    this.getMostPopulatedChannel()
+      .join()
+      .then(() => this.playSound(FilesUtil.getStartupSound()))
+      .catch((err) => {
+        console.error("Connect failed: ", err);
+        this.disconnect();
+      });
+  }
+
+  disconnect() {
+    this.client.voice.connections.each((connection) => connection.disconnect());
   }
 
   onMessage(message) {
@@ -131,16 +149,25 @@ class DiscordClient {
   }
 
   getMostPopulatedChannel() {
-    const channels = Array.from(this.server.channels.cache.values()).filter((c) => c.type === "voice" && c.joinable);
+    const channels = Array.from(this.server.channels.cache.values()).filter(
+      (channel) => channel.type === "voice" && channel.joinable
+    );
     channels.sort((a, b) => b.members.array().length - a.members.array().length);
     return channels[0];
+  }
+
+  channelsWithUsers() {
+    const channels = Array.from(this.server.channels.cache.values()).filter(
+      (channel) => channel.type === "voice" && channel.joinable
+    );
+    return channels.some((x) => x.members.array().filter((member) => member.id !== this.client.user.id).length > 0);
   }
 
   checkChannels() {
     const voice = this.server.me.voice;
     if (!voice.channel || voice.channel.members.size === 1) {
-      this.client.voice.connections.each((connection) => connection.disconnect());
-      this.connect();
+      this.disconnect();
+      if (this.channelsWithUsers()) this.connect();
     }
   }
 }
