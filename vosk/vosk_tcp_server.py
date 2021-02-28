@@ -19,13 +19,20 @@ class VoskTCPServer(socketserver.StreamRequestHandler):
         else:
           if not os.path.exists(message):
             self.request.sendall(str.encode("fail"))
-          rec = KaldiRecognizer(self.server.model, 16000)
-          proc = subprocess.run([self.server.ffmpeg, "-f", "mp3", "-i", message, "-f", "s16le", "-ac", "1", "-ar", "16000", "pipe:1"], stdout=subprocess.PIPE)
-          rec.AcceptWaveform(proc.stdout)
-          self.request.sendall(str.encode(rec.FinalResult()))
-          self.request.close()
+            self.request.close()
+          try:
+            rec = KaldiRecognizer(self.server.model, 16000)
+            proc = subprocess.run([self.server.ffmpeg, "-f", "mp3", "-i", message, "-f", "s16le", "-ac", "1", "-ar", "16000", "pipe:1"], stdout=subprocess.PIPE)
+            rec.AcceptWaveform(proc.stdout)
+            self.request.sendall(str.encode(rec.FinalResult()))
+          except:
+            self.request.sendall(str.encode("fail"))
+          finally:
+            self.request.close()
 
 if __name__ == "__main__":
+    SetLogLevel(-1)
+    
     HOST, PORT = "localhost", 9999
     if len(sys.argv) < 3:
       print(sys.argv[0] + " <model dir> <ffmpeg path>")

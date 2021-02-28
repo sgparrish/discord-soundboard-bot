@@ -59,14 +59,16 @@ class DiscordClient {
                 { max: 1 }
               )
               .then((collected) => {
-                message
-                  .delete()
-                  .catch((err) => console.error("Delete msg failed: ", err))
-                  .finally(() => {
-                    this.client.destroy();
-                    FilesUtil.killVosk();
-                    process.exit();
-                  });
+                if (collected.size >= 1) {
+                  message
+                    .delete()
+                    .catch((err) => console.error("Delete msg failed: ", err))
+                    .finally(() => {
+                      this.client.destroy();
+                      FilesUtil.killVosk();
+                      process.exit();
+                    });
+                }
               })
               .catch((err) => console.error("❌ Collector failed: ", err));
 
@@ -77,13 +79,16 @@ class DiscordClient {
                 { max: 1 }
               )
               .then((collected) => {
-                this.disconnect();
-                setInterval(this.initializeMessages.bind(this), 500);
+                if (collected.size >= 1) {
+                  this.disconnect();
+                  this.initializeMessages();
+                }
               })
               .catch((err) => console.error("🔌 Collector failed: ", err));
-          });
+          })
+          .catch((err) => console.error("Message failed: ", err));
       })
-      .catch((err) => console.error("Message failed: ", err));
+      .catch((err) => console.error("Resolving channel failed: ", err));
   }
 
   connect() {
@@ -143,14 +148,14 @@ class DiscordClient {
             name: member.displayName,
             image: member.user.displayAvatarURL({ format: "png", dynamic: false, size: 32 }),
           }))
-          .catch((error) => ({ id }))
+          .catch(() => ({ id }))
       )
     );
   }
 
   getMostPopulatedChannel() {
     const channels = Array.from(this.server.channels.cache.values()).filter(
-      (channel) => channel.type === "voice" && channel.joinable
+      (channel) => channel.type === "voice" && channel.joinable && channel.speakable
     );
     channels.sort((a, b) => b.members.array().length - a.members.array().length);
     return channels[0];
@@ -158,7 +163,7 @@ class DiscordClient {
 
   channelsWithUsers() {
     const channels = Array.from(this.server.channels.cache.values()).filter(
-      (channel) => channel.type === "voice" && channel.joinable
+      (channel) => channel.type === "voice" && channel.joinable && channel.speakable
     );
     return channels.some((x) => x.members.array().filter((member) => member.id !== this.client.user.id).length > 0);
   }

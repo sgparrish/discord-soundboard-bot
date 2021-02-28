@@ -189,6 +189,10 @@ class FilesUtil {
     ]);
     voskProcess.stdout.pipe(process.stdout);
     voskProcess.stderr.pipe(process.stderr);
+
+    // i'm taking you with me 
+    process.on("exit", this.killVosk.bind(this));
+
     setTimeout(this.initializeVoskQueue.bind(this), 10000);
   }
 
