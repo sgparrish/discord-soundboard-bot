@@ -38,7 +38,7 @@ const ClipControl = ({ users, sounds }) => {
       setAudioBuffer(null);
       setBufferSource(null);
       setSoundName("");
-      fetch(`/api/sound/${userId}/${soundId}`).then((res) =>
+      fetch(`/api/sound/recorded/${userId}/${soundId}`).then((res) =>
         res.arrayBuffer().then((arrayBuffer) => {
           context.decodeAudioData(arrayBuffer).then((audioBuffer) => {
             setLoadingSound(false);
