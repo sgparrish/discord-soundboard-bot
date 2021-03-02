@@ -64,10 +64,13 @@ server.get("/api/sound/play/:type/:user/:soundname", (req, res) => {
   res.status(204).send();
 });
 
-server.get("/api/sound/:userId/:soundId", (req, res) => {
-  const { userId, soundId } = req.params;
-  const filename = FilesUtil.getRecordedFilename(userId, soundId);
-  const { basename, dirname } = FilesUtil.splitFilename(filename);
+server.get("/api/sound/:type/:userId/:soundId", (req, res) => {
+  const { type, userId, soundId } = req.params;
+  const sound =
+    type.toLowerCase() === "recorded"
+      ? FilesUtil.getRecordedFilename(user, soundname)
+      : FilesUtil.getSoundFilename(user, soundname);
+  const { basename, dirname } = FilesUtil.splitFilename(sound);
   res.sendFile(basename, { root: dirname });
 });
 
