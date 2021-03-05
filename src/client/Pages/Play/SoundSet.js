@@ -4,8 +4,7 @@ import { Accordion, Button, Icon } from "semantic-ui-react";
 const context = new AudioContext();
 
 const SoundSet = ({ soundset, index, user, active, handleClick }) => {
-  
-  const previewSound = ;
+  const bufferSource = React.useRef(null);
 
   const label = user.name ? (
     <React.Fragment>
@@ -22,28 +21,25 @@ const SoundSet = ({ soundset, index, user, active, handleClick }) => {
         {label}
       </Accordion.Title>
       <Accordion.Content active={active}>
-        {soundset.sounds.map(({sound}) => (
-          <Button.Group key={sound}>
-            <Button
-              size="mini"
-              content={source}
-              onClick={() => fetch(`/api/sound/play/published/${soundset.category}/${sound}`)}
-            />
+        {soundset.sounds.map(({ sound }) => (
+          <Button.Group key={sound} compact size="mini" basic>
+            <Button content={sound} onClick={() => fetch(`/api/sound/play/published/${soundset.category}/${sound}`)} />
             <Button
               icon="play"
-              color="blue"
               onClick={() =>
                 fetch(`/api/sound/published/${soundset.category}/${sound}`).then((res) =>
-                  res.arrayBuffer().then((arrayBuffer) => 
-                   context.decodeAudioData(arrayBuffer).then((audioBuffer) => {
-                     const source = context.createBufferSource();
-                     source.buffer = audioBuffer;
-                     source.connect(context.destination);
-                     source.start();
-                   })
+                  res.arrayBuffer().then((arrayBuffer) =>
+                    context.decodeAudioData(arrayBuffer).then((audioBuffer) => {
+                      if (bufferSource.current !== null) bufferSource.current.stop();
+                      const source = context.createBufferSource();
+                      bufferSource.current = source;
+                      source.buffer = audioBuffer;
+                      source.connect(context.destination);
+                      source.start();
+                    })
                   )
-                 )
-                }
+                )
+              }
             />
           </Button.Group>
         ))}

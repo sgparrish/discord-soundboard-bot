@@ -14,6 +14,12 @@ FilesUtil.deleteOldFiles();
 
 if (process.env.VOSK_ENABLED.toLowerCase().startsWith("t")) FilesUtil.initializeVosk();
 
+// Cache users on start up
+FilesUtil.getSoundList().then((sounds) => {
+  const userIds = sounds.map((sound) => sound.category).filter((value, index, self) => self.indexOf(value) === index);
+  discordClient.getUserMetadata(userIds);
+});
+
 server.use(compression());
 server.use(express.json());
 server.use(express.static("dist"));
@@ -68,8 +74,8 @@ server.get("/api/sound/:type/:userId/:soundId", (req, res) => {
   const { type, userId, soundId } = req.params;
   const sound =
     type.toLowerCase() === "recorded"
-      ? FilesUtil.getRecordedFilename(user, soundname)
-      : FilesUtil.getSoundFilename(user, soundname);
+      ? FilesUtil.getRecordedFilename(userId, soundId)
+      : FilesUtil.getSoundFilename(userId, soundId);
   const { basename, dirname } = FilesUtil.splitFilename(sound);
   res.sendFile(basename, { root: dirname });
 });

@@ -41,6 +41,7 @@ const ClipControl = ({ users, sounds }) => {
       fetch(`/api/sound/recorded/${userId}/${soundId}`).then((res) =>
         res.arrayBuffer().then((arrayBuffer) => {
           context.decodeAudioData(arrayBuffer).then((audioBuffer) => {
+            if (bufferSource) bufferSource.stop();
             setLoadingSound(false);
             setTimes([0, audioBuffer.duration]);
             setAudioBuffer(audioBuffer);
@@ -56,7 +57,7 @@ const ClipControl = ({ users, sounds }) => {
   }, [userId, soundId, setLoadingSound, setTimes, setAudioBuffer, setBufferSource, setSoundName]);
 
   const play = React.useCallback(() => {
-    bufferSource.stop();
+    if (bufferSource) bufferSource.stop();
     const source = context.createBufferSource();
     source.buffer = audioBuffer;
     source.connect(context.destination);
@@ -108,12 +109,14 @@ const ClipControl = ({ users, sounds }) => {
           <CommentEntry {...metadata} users={users} />
         </Comment.Group>
       </div>
-      <Button.Group icon className="control-buttons">
-        <Button icon="play" title="Play sound" loading={loadingSound} disabled={!audioBuffer} onClick={play} />
-        <Button icon="stop" title="Stop sound" loading={loadingSound} disabled={!audioBuffer} onClick={stop} />
-        <Button icon="cut" title="Cut sound" loading={loadingSound} disabled={!audioBuffer} onClick={toggleModal} />
-        <Button icon="discord" title="Play sound to Discord" loading={loadingSound} disabled={!audioBuffer} onClick={playToDiscord} />
-      </Button.Group>
+      <div className="control-buttons">
+        <Button.Group icon basic >
+          <Button icon="play" title="Play sound" loading={loadingSound} disabled={!audioBuffer} onClick={play} />
+          <Button icon="stop" title="Stop sound" loading={loadingSound} disabled={!audioBuffer} onClick={stop} />
+          <Button icon="cut" title="Cut sound" loading={loadingSound} disabled={!audioBuffer} onClick={toggleModal} />
+          <Button icon="discord" title="Play sound to Discord" loading={loadingSound} disabled={!audioBuffer} onClick={playToDiscord} />
+        </Button.Group>
+      </div>
       <div className="clip-slider">
         <SoundSlider duration={audioBuffer ? audioBuffer.duration : 60} times={times} setTimes={setTimes} />
       </div>
