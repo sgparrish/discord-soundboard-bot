@@ -153,26 +153,33 @@ class DiscordClient {
     );
   }
 
-  getMostPopulatedChannel() {
-    const channels = Array.from(this.server.channels.cache.values()).filter(
-      (channel) => channel.type === "voice" && channel.joinable && channel.speakable
+  getJoinableChannels() {
+    return Array.from(this.server.channels.cache.values()).filter(
+      (channel) =>
+        channel.type === "voice" &&
+        channel.joinable &&
+        channel.speakable &&
+        channel.id !== this.server.afkChannelID &&
+        channel.members.array().filter((member) => member.id !== this.client.user.id).length > 0
     );
-    channels.sort((a, b) => b.members.array().length - a.members.array().length);
-    return channels[0];
   }
 
-  channelsWithUsers() {
-    const channels = Array.from(this.server.channels.cache.values()).filter(
-      (channel) => channel.type === "voice" && channel.joinable && channel.speakable
+  getMostPopulatedChannel() {
+    const channels = this.getJoinableChannels();
+    channels.sort(
+      (a, b) =>
+        b.members.array().filter((member) => member.id !== this.client.user.id).length -
+        a.members.array().filter((member) => member.id !== this.client.user.id).length
     );
-    return channels.some((x) => x.members.array().filter((member) => member.id !== this.client.user.id).length > 0);
+    return channels[0];
   }
 
   checkChannels() {
     const voice = this.server.me.voice;
-    if (!voice.channel || voice.channel.members.size === 1) {
+    if (voice.channel !== null && voice.channel.members.size === 1) {
       this.disconnect();
-      if (this.channelsWithUsers()) this.connect();
+    } else if (voice.channel === null && this.getJoinableChannels().length > 0) {
+      this.connect();
     }
   }
 }
