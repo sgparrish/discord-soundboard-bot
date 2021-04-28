@@ -1,5 +1,5 @@
 {
-  "name": "simple-react-full-stack",
+  "name": "discord-soundboard-bot",
   "version": "1.0.0",
   "description": "Discord bot to record and play fun sounds",
   "main": "src/server/index.js",

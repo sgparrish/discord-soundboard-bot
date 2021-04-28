@@ -1,6 +1,6 @@
 require("dotenv").config();
 const express = require("express");
-var compression = require("compression");
+const compression = require("compression");
 const schedule = require("node-schedule");
 
 const FilesUtil = require("./filesutil");
