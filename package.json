@@ -59,5 +59,8 @@
     "webpack": "^4.5.0",
     "webpack-cli": "^3.0.8",
     "webpack-dev-server": "^3.11.2"
+  },
+  "resolutions": {
+    "nedb/**/underscore": "1.12.1"
   }
 }
