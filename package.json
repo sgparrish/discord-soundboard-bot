@@ -20,7 +20,7 @@
     "discord.js": "^12.5.3",
     "dotenv": "^8.2.0",
     "duplex-child-process": "^1.0.0",
-    "express": "^4.16.3",
+    "express": "^4.17.3",
     "ffmpeg-static": "^4.2.2",
     "glob": "^7.1.6",
     "moment": "^2.26.0",
