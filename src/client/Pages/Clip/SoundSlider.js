@@ -3,16 +3,17 @@ import { Slider, Rail, Handles, Tracks, Ticks } from "react-compound-slider";
 
 import "./SoundSlider.css";
 
-const SliderRail = ({ getRailProps }) => (
+const SliderRail = ({ playbackPercent, getRailProps }) => (
   <React.Fragment>
     <div className="outer rail" {...getRailProps()} />
     <div className="inner rail" />
+    <div className="playback rail" style={{width: `${playbackPercent}%`}}/>
   </React.Fragment>
 );
 
 const Handle = ({ domain: [min, max], handle: { id, value, percent }, disabled, getHandleProps }) => (
   <React.Fragment>
-    <div className="outer slider" style={{ left: `${percent}%` }} {...getHandleProps(id)} />
+    <div className="outer slider" style={{ left: `${percent}%`, cursor: "ew-resize" }} {...getHandleProps(id)} />
     <div className={`inner slider${disabled ? " disalbed" : ""}`} style={{ left: `${percent}%` }} />
   </React.Fragment>
 );

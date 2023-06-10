@@ -24,34 +24,60 @@ button.ui.button {
 
 .soundboard-page {
   height: 100%;
-  overflow: auto;
+  overflow: hidden auto;
+}
+
+.soundboard-page .accordion .title {
+  display: flex;
+}
+
+.soundboard-page .accordion .title > * {
+  align-self: center;
+}
+
+.soundboard-page .menu > .item.active {
+  background-color: rgba(0,0,0,.15) !important;
+}
+
+.soundboard-page .menu > .item.label, .soundboard-page .menu > .item.label:hover {
+  color: white !important;
+  background-color: rgba(0,0,0,.8) !important;
+  margin-left: 2rem;
+}
+
+@media (max-width: 1250px) {
+  .soundboard-page .menu > .item.label, .soundboard-page .menu > .item.label:hover {
+    margin-left: 0;
+  }
+}
+
+.clip-card .button:not(:first-child) {
+  flex-grow: 0;
 }
 
 .clip-page {
   height: 100%;
   display: grid;
   grid-template-rows: auto 1fr;
-  grid-template-columns: 1fr 2fr;
+  grid-template-columns: 1fr;
   grid-template-areas:
-    "transcript clip-control"
-    "transcript timeline";
+    "clip-interface"
+    "transcript";
   overflow: hidden;
+  gap: 1rem;
 }
 
-.clip-control {
-  grid-area: clip-control;
+.clip-interface {
+  grid-area: clip-interface;
 }
 
 .transcript {
   grid-area: transcript;
-}
-
-.timeline {
-  grid-area: timeline;
-}
-
-.user-label > * {
-  vertical-align: middle;
+  overflow: auto;
+  width: 100%;
+  max-width: 650px;
+  margin: 0 auto 0 auto;
+  gap: 0.25rem;
 }
 
 img.user-image {
@@ -60,25 +86,21 @@ img.user-image {
   width: 32px;
 }
 
-.timeline > div {
-  height: 100%;
+.ui.comments > .comment {
+  overflow: visible;
 }
 
-.comments {
-  overflow: auto;
-  width: 100%;
+.ui.comments > .comment .discriminator {
+  color: rgba(0,0,0,.4);
+  font-size: 0.8em;
 }
 
 .ui.comments > .comment > .avatar > img {
   border-radius: 50%;
 }
 
-.comments > .comment.highlight {
+.comments > .comment.selected {
   background: #ff8;
-}
-
-.comments > .comment.link {
-  cursor: pointer;
 }
 
 .comments > .comment > .content {
@@ -90,34 +112,23 @@ img.user-image {
   display: inline-block;
 }
 
-.comments > .comment > .content > .text {
-  display: block;
-}
-
-.clip-control {
+.clip-interface {
   text-align: center;
 }
 
-.clip-control .clip-comment {
+.clip-interface .clip-comment {
   display: inline-block;
 }
 
-.clip-control .control-buttons {
+.clip-interface .control-buttons {
   display: block;
 }
 
-.clip-control .clip-slider {
+.clip-interface .clip-slider {
   display: inline-block;
   width: 50%;
-  max-width: 400px;
-  height: 40px;
-  margin-top: 20px;
+  max-width: 600px;
+  height: 4rem;
+  margin-top: 2rem;
 }
 
-.accordion .title {
-  display: flex;
-}
-
-.accordion .title > * {
-  align-self: center;
-}

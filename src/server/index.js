@@ -1,93 +1,33 @@
 require("dotenv").config();
+
+const path = require("node:path");
+const http = require("node:http");
 const express = require("express");
 const compression = require("compression");
-const schedule = require("node-schedule");
+const pinoHttp = require("pino-http");
 
-const FilesUtil = require("./filesutil");
-const DiscordClient = require("./discord");
+const Config = require("./services/config");
+const Logger = require("./services/logger");
+const loadServices = require("./services");
 
-const server = express();
-const discordClient = new DiscordClient();
+const app = express();
+const server = http.createServer(app);
 
-schedule.scheduleJob("0 * * * *", FilesUtil.deleteOldFiles);
-FilesUtil.deleteOldFiles();
+// setup middleware
+app.use(pinoHttp({ logger: Logger, useLevel: Config.logLevel }));
+app.use(compression());
+app.use(express.json());
 
-if (process.env.VOSK_ENABLED.toLowerCase().startsWith("t")) FilesUtil.initializeVosk();
-
-// Cache users on start up
-FilesUtil.getSoundList().then((sounds) => {
-  const userIds = sounds.map((sound) => sound.category).filter((value, index, self) => self.indexOf(value) === index);
-  discordClient.getUserMetadata(userIds);
+// setup routes
+app.use(express.static("dist"));
+app.use(require("./routes"));
+app.all("*", (req, res) => {
+  res.sendFile(path.resolve("dist", "index.html"));
 });
 
-server.use(compression());
-server.use(express.json());
-server.use(express.static("dist"));
-
-server.get("/api/sounds", (req, res) => {
-  FilesUtil.getSoundList()
-    .then((sounds) => {
-      const userIds = sounds
-        .map((sound) => sound.category)
-        .filter((value, index, self) => self.indexOf(value) === index);
-      discordClient
-        .getUserMetadata(userIds)
-        .then((users) =>
-          res.json({
-            users: users.map((x) => x.value),
-            sounds,
-          })
-        )
-        .catch((err) => res.status(500).json({ error: err }));
-    })
-    .catch((err) => res.status(500).json({ error: err }));
+// start server
+const port = Config.serverPort;
+server.listen(port, "0.0.0.0", () => {
+  loadServices(server);
+  Logger.info(`Successfully bound to '${Config.serverHostname}:${port}'`);
 });
-
-server.get("/api/sounds/recorded", (req, res) => {
-  FilesUtil.getRecordedSounds()
-    .then((sounds) => {
-      const userIds = sounds.map((sound) => sound.userId).filter((value, index, self) => self.indexOf(value) === index);
-      discordClient
-        .getUserMetadata(userIds)
-        .then((users) =>
-          res.json({
-            users: users.map((x) => x.value),
-            sounds,
-          })
-        )
-        .catch((err) => res.status(500).json({ error: err }));
-    })
-    .catch((err) => res.status(500).json({ error: err }));
-});
-
-server.get("/api/sound/play/:type/:user/:soundname", (req, res) => {
-  const { type, user, soundname } = req.params;
-  const sound =
-    type.toLowerCase() === "recorded"
-      ? FilesUtil.getRecordedFilename(user, soundname)
-      : FilesUtil.getSoundFilename(user, soundname);
-  discordClient.playSound(sound);
-  res.status(204).send();
-});
-
-server.get("/api/sound/:type/:userId/:soundId", (req, res) => {
-  const { type, userId, soundId } = req.params;
-  const sound =
-    type.toLowerCase() === "recorded"
-      ? FilesUtil.getRecordedFilename(userId, soundId)
-      : FilesUtil.getSoundFilename(userId, soundId);
-  const { basename, dirname } = FilesUtil.splitFilename(sound);
-  res.sendFile(basename, { root: dirname });
-});
-
-server.post("/api/sound/cut", (req, res) => {
-  const { userId, soundId, start, end, name } = req.body;
-  FilesUtil.createSound(userId, soundId, start, end, name);
-  res.status(204).send();
-});
-
-// catch all for mr react-router, esq
-server.get("*", (req, res) => res.sendFile("index.html", { root: "dist" }));
-
-const port = process.env.PORT || 8080;
-server.listen(port, "0.0.0.0", () => console.log(`Listening on port ${port} :)`));
