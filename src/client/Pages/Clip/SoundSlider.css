@@ -19,6 +19,15 @@
   background-color: rgba(0,0,0,.05);
 }
 
+.playback.rail {
+  position: absolute;
+  width: 0%;
+  height: 5px;
+  transform: translate(0%, -50%);
+  pointer-events: none;
+  background-color: #2185d0;
+}
+
 .outer.slider {
   position: absolute;
   width: 28px;

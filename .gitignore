@@ -3,7 +3,7 @@ node_modules
 dist
 *.log
 
-res
-recorded
-sounds.db
-vosk/model
+clips
+recordings
+model
+*.sqlite

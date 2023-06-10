@@ -1,30 +1,50 @@
 import React from "react";
-import { Comment } from "semantic-ui-react";
-import { useRouteMatch } from "react-router-dom";
+import { Comment, Loader } from "semantic-ui-react";
+import InfiniteScroller from "./InfiniteScroller";
 
-import CommentEntry from "./CommentEntry";
+import RecordingComment from "./RecordingComment";
 
-const Transcript = ({ users, sounds }) => {
-  const match = useRouteMatch({
-    path: `/clip/:userId/:soundId`,
-  }) || { params: {} };
-  const { userId, soundId } = match.params;
+const Transcript = ({
+  recordings,
+  selectedRecording,
+  clipRecording,
+  playRecording,
+  saveRecording,
 
-  React.useEffect(() => {
-    if (sounds.length > 0 && soundId) {
-      const childIndex = sounds.findIndex((sound) => sound._id === soundId);
-      document
-        .getElementsByClassName("transcript")[0]
-        .children[childIndex].scrollIntoView({ behavior: "smooth" });
-    }
-  }, [sounds, soundId]);
-
+  loadingRecordingsTop,
+  loadingRecordingsBottom,
+  hasMoreRecordingsTop,
+  hasMoreRecordingsBottom,
+  loadPrevRecordings,
+  loadNextRecordings,
+}) => {
   return (
-    <Comment.Group className="transcript">
-      {sounds.map((sound) => (
-        <CommentEntry link key={sound._id} {...sound} users={users} highlight={soundId === sound._id} />
-      ))}
-    </Comment.Group>
+    <InfiniteScroller
+      className="transcript"
+      loadingTop={loadingRecordingsTop}
+      loadingBottom={loadingRecordingsBottom}
+      hasMoreTop={hasMoreRecordingsTop}
+      hasMoreBottom={hasMoreRecordingsBottom}
+      loadMoreTop={loadPrevRecordings}
+      loadMoreBottom={loadNextRecordings}
+      topMargin={30}
+      bottomMargin={30}
+      stickToBottom
+      startAtBottom
+      loaderComponent={<Loader active inline />}
+    >
+      <Comment.Group>
+        {recordings.map((recording) => (
+          <RecordingComment
+            recording={recording}
+            selected={recording.id === selectedRecording?.id}
+            clipRecording={clipRecording}
+            playRecording={playRecording}
+            saveRecording={saveRecording}
+          />
+        ))}
+      </Comment.Group>
+    </InfiniteScroller>
   );
 };
 

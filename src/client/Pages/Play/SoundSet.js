@@ -1,50 +1,40 @@
 import React from "react";
-import { Accordion, Button, Icon } from "semantic-ui-react";
+import { Accordion, Button, Card, Icon, Image } from "semantic-ui-react";
 
-const context = new AudioContext();
-
-const SoundSet = ({ soundset, index, user, active, handleClick }) => {
-  const bufferSource = React.useRef(null);
-
-  const label = user.name ? (
-    <React.Fragment>
-      <img class="user-image" src={user.image} />
-      <span>{user.name}</span>
-    </React.Fragment>
-  ) : (
-    <span>{soundset.category}</span>
-  );
+const SoundSet = ({ id, member, sounds, index, active, handleClick }) => {
   return (
-    <div>
+    <React.Fragment>
       <Accordion.Title active={active} index={index} onClick={handleClick}>
         <Icon name="dropdown" />
-        {label}
+        {member ? (
+          <React.Fragment>
+            <Image src={member.iconURL} avatar />
+            <span>{member.name}</span>
+          </React.Fragment>
+        ) : (
+          <span>{id}</span>
+        )}
       </Accordion.Title>
       <Accordion.Content active={active}>
-        {soundset.sounds.map(({ sound }) => (
-          <Button.Group key={sound} compact size="mini" basic>
-            <Button content={sound} onClick={() => fetch(`/api/sound/play/published/${soundset.category}/${sound}`)} />
-            <Button
-              icon="play"
-              onClick={() =>
-                fetch(`/api/sound/published/${soundset.category}/${sound}`).then((res) =>
-                  res.arrayBuffer().then((arrayBuffer) =>
-                    context.decodeAudioData(arrayBuffer).then((audioBuffer) => {
-                      if (bufferSource.current !== null) bufferSource.current.stop();
-                      const source = context.createBufferSource();
-                      bufferSource.current = source;
-                      source.buffer = audioBuffer;
-                      source.connect(context.destination);
-                      source.start();
-                    })
-                  )
-                )
-              }
-            />
-          </Button.Group>
-        ))}
+        <Card.Group>
+          {sounds.map((sound) => (
+            <Card>
+              <Card.Content>
+                {member ? <Image circular floated="right" size="mini" src={member.iconURL}  /> : null}
+                <Card.Header textAlign="left">{sound}</Card.Header>
+                <Card.Meta textAlign="left">{member ? member.name : id}</Card.Meta>
+                <Button.Group basic fluid compact>
+                  <Button icon="discord" onClick={() => fetch(`/api/clips/board/play/${id}/${sound}`)} />
+                  <Button icon="play" onClick={() => fetch(`/api/clips/board/play/${id}/${sound}`)} />
+                  <Button icon="download" onClick={() => fetch(`/api/clips/board/play/${id}/${sound}`)} />
+                  <Button icon="star" onClick={() => fetch(`/api/clips/board/play/${id}/${sound}`)} />
+                </Button.Group>
+              </Card.Content>
+            </Card>
+          ))}
+        </Card.Group>
       </Accordion.Content>
-    </div>
+    </React.Fragment>
   );
 };
 

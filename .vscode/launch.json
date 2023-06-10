@@ -10,7 +10,7 @@
       "request": "launch",
       "cwd": "${workspaceFolder}",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run-script", "debug"],
+      "runtimeArgs": ["run-script", "server"],
       "port": 9229
     }
   ]
