@@ -2,7 +2,7 @@ const { EventEmitter } = require("events");
 const { Op } = require("sequelize");
 
 const { sequelize, Recording, Clip, Consent } = require("../models");
-const logger = require("../services/logger");
+const logger = require("./logger");
 
 class Persistence extends EventEmitter {
   events = {
@@ -56,6 +56,12 @@ class Persistence extends EventEmitter {
         logger.error("Error initializing database: " + err);
       });
   }
+
+  logAndEmit(eventName, event) {
+    logger.info({ eventName, event });
+    this.emit(eventName, event);
+  }
+
   // #region Recordings
   async getRecording(id) {
     return await Recording.findByPk(id);
@@ -69,7 +75,7 @@ class Persistence extends EventEmitter {
     try {
       const recording = await Recording.create({ userId, start: new Date(start), end: new Date(end), filename });
       if (notify) {
-        this.emit(this.events.recording.create.success, recording);
+        this.logAndEmit(this.events.recording.create.success, recording);
       }
     } catch (err) {
       logger.error("Failed to create recording record: " + err);
@@ -81,7 +87,7 @@ class Persistence extends EventEmitter {
       await recording.save();
       if (notify) {
         recording = await Recording.findByPk(recording.id);
-        this.emit(this.events.recording.update.success, recording);
+        this.logAndEmit(this.events.recording.update.success, recording);
       }
     } catch (err) {
       logger.error("Failed to update recording record: " + err);
@@ -92,7 +98,7 @@ class Persistence extends EventEmitter {
     try {
       if (notify) recording = await Recording.findByPk(recording.id);
       await recording.destroy();
-      if (notify) this.emit(this.events.recording.delete.success, recording);
+      if (notify) this.logAndEmit(this.events.recording.delete.success, recording);
     } catch (err) {
       logger.error("Failed to delete recording record: " + err);
     }
@@ -119,7 +125,7 @@ class Persistence extends EventEmitter {
         },
       });
 
-      deletedRecordings.forEach(this.emit(this.events.recording.delete.success, recording));
+      deletedRecordings.forEach(this.logAndEmit(this.events.recording.delete.success, recording));
     } catch (err) {
       logger.error("Failed to create recording record: " + err);
     }
@@ -146,7 +152,7 @@ class Persistence extends EventEmitter {
     const clip = await this.getClip({ category, filename, fileModified: new Date() });
 
     // send along
-    this.emit(this.events.clip.create.success, clip);
+    this.logAndEmit(this.events.clip.create.success, clip);
   }
 
   async clipPlayed({ category, filename }) {
@@ -156,7 +162,7 @@ class Persistence extends EventEmitter {
       clip.playCount += 1;
       await clip.save();
 
-      this.emit(this.events.clip.update.success, clip);
+      this.logAndEmit(this.events.clip.update.success, clip);
     } catch (err) {
       logger.error("Failed to update clip: " + err);
     }
@@ -180,7 +186,7 @@ class Persistence extends EventEmitter {
       // only fire events when consent status has changed
       if (oldConsent?.status !== status) {
         const eventType = this.events.consent[status];
-        this.emit(eventType, consent);
+        this.logAndEmit(eventType, consent);
       }
     } catch (err) {
       logger.error("Failed to create consent record: " + err);

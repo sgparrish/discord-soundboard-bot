@@ -1,13 +1,14 @@
 import React from "react";
 import { useSelector } from "react-redux";
 import { Icon, Loader, Menu } from "semantic-ui-react";
-import { Link, useRouteMatch } from "react-router-dom";
+import { Link, useMatch } from "react-router-dom";
 
-const NavItem = ({ title, path }) => (
-  <Menu.Item active={!!useRouteMatch({ path })}>
+const NavItem = ({ title, path }) => {
+  return (
+  <Menu.Item active={!!useMatch({path, end: false})}>
     <Link to={path}>{title}</Link>
   </Menu.Item>
-);
+);}
 
 const NavStatus = ({ connecting, connected }) => (
   <Menu.Item active={false} position="right">

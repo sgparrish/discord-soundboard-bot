@@ -21,7 +21,7 @@ class Serialization {
     const member = (await this.server.members.resolve(category)) || null;
     if (member) {
       clip.member = {
-        name: `${member.displayName}#${member.user.discriminator}`,
+        name: member.displayName,
         iconURL: member.displayAvatarURL({ format: "png", dynamic: false, size: 32 }),
       };
     }
@@ -35,7 +35,7 @@ class Serialization {
     const member = (await this.server.members.resolve(userId)) || null;
     if (member) {
       recording.member = {
-        name: `${member.displayName}#${member.user.discriminator}`,
+        name: member.displayName,
         iconURL: member.displayAvatarURL({ format: "png", dynamic: false, size: 32 }),
       };
     }

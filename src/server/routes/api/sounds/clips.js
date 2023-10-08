@@ -1,6 +1,6 @@
 const path = require("node:path");
 
-const ClipManager = require("../../../services/ClipManager");
+const ClipManager = require("../../../services/clipmanager");
 const DiscordVoice = require("../../../services/discord/voice");
 const Serialization = require("../../../services/serialization");
 

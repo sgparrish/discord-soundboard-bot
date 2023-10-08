@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef, useLayoutEffect } from "react";
-import { useHistory } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Button, Header, Input, Modal } from "semantic-ui-react";
 
 const PublishModal = ({ recording, times, modalOpen, toggleModal, createClip }) => {
@@ -7,7 +7,7 @@ const PublishModal = ({ recording, times, modalOpen, toggleModal, createClip }) 
   const [soundName, setSoundName] = useState("");
   const [creatingSound, setCreatingSound] = useState(false);
 
-  const history = useHistory();
+  const navigate = useNavigate();
 
   useEffect(() => {
     setSoundName(recording && recording.text && recording.text !== "..." ? recording.text.substring(0, 25) : "");
@@ -25,7 +25,7 @@ const PublishModal = ({ recording, times, modalOpen, toggleModal, createClip }) 
     createClip(recording.id, soundName, times[0], times[1])
       .then((_) => {
         setCreatingSound(false);
-        history.push(`/play`);
+        navigate(`/play`);
       })
       .catch((_) => {
         setSoundName("");

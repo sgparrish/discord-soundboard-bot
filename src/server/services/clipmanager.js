@@ -101,7 +101,7 @@ class ClipManager {
       ],
       {
         shell: true,
-        windowsHide: false,A
+        windowsHide: false,
       }
     );
 

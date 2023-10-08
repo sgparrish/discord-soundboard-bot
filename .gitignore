@@ -1,9 +1,6 @@
 node_modules
-.env
-dist
 *.log
+.env
 
-clips
-recordings
-model
-*.sqlite
+dist
+data

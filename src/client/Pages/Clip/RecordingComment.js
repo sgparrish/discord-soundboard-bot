@@ -22,16 +22,12 @@ const RecordingComment = ({
     status,
     member: { name, iconURL },
   } = recording;
-  const hashIdx = name.lastIndexOf("#");
-  const userName = name.substring(0, hashIdx);
-  const discriminator = name.substring(hashIdx);
   return (
     <Comment onClick={() => clipRecording(recording)} className={selected ? "selected" : undefined}>
       <Comment.Avatar src={iconURL} />
       <Comment.Content>
         <Comment.Author title={userId}>
-          <span>{userName}</span>
-          <span className="discriminator">{discriminator}</span>
+          <span>{name}</span>
         </Comment.Author>
         <Comment.Metadata title={start ? moment(start).toISOString() : undefined}>
           {start ? moment(start).format("lll") : ""}

@@ -1,14 +1,17 @@
+const path = require("path");
+
 class Config {
   constructor() {
     this.serverHostname = process.env.SERVER_HOSTNAME || "localhost";
     this.serverPort = process.env.SERVER_PORT || 8080;
 
-    this.logFile = process.env.LOG_FILE || "soundboard.log"
-    this.logLevel = process.env.LOG_LEVEL || "warn"
-    this.sqliteDb = process.env.SQLITE_DB || "db.sqlite";
-    this.clipsDirectory = process.env.CLIPS_DIRECTORY || "clips";
-    this.recordingsDirectory = process.env.RECORDINGS_DIRECTORY || "recordings";
-    this.voskModel = process.env.VOSK_MODEL || "model";
+    this.dataDir = process.env.DATA_DIR || "data";
+    this.logFile = process.env.LOG_FILE || path.join(this.dataDir, "soundboard.log");
+    this.logLevel = process.env.LOG_LEVEL || "warn";
+    this.sqliteDb = process.env.SQLITE_DB || path.join(this.dataDir, "db.sqlite");
+    this.clipsDirectory = process.env.CLIPS_DIRECTORY || path.join(this.dataDir, "clips");
+    this.recordingsDirectory = process.env.RECORDINGS_DIRECTORY || path.join(this.dataDir, "recordings");
+    this.voskModel = process.env.VOSK_MODEL || path.join(this.dataDir, "model");
 
     this.discordToken = process.env.DISCORD_TOKEN;
     this.discordOwner = process.env.DISCORD_OWNER;

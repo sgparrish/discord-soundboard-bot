@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
-import { Checkbox, Container, Menu } from "semantic-ui-react";
+import { Checkbox, Container, Dropdown, Menu } from "semantic-ui-react";
 import useCookie from "react-use-cookie";
 
 import ClipCardGroup from "./ClipCardGroup";
@@ -130,14 +130,26 @@ const SoundboardPage = () => {
   return (
     <Container className="soundboard-page" fluid>
       <Menu secondary stackable>
-        <Menu.Item content="Show" disabled className="label" />
-        <Menu.Item content="All Clips" active={!onlyFavorites} onClick={() => setOnlyFavorites(false)} />
-        <Menu.Item content="Favorites" active={onlyFavorites} onClick={() => setOnlyFavorites(true)} />
-        <Menu.Item content="Sort" disabled className="label" />
-        <Menu.Item content="Last Played" active={sortBy === "lastPlayed"} onClick={() => setSortBy("lastPlayed")} />
-        <Menu.Item content="Clip Name" active={sortBy === "clipName"} onClick={() => setSortBy("clipName")} />
-        <Menu.Item content="Newest" active={sortBy === "newest"} onClick={() => setSortBy("newest")} />
-        <Menu.Item content="Most Played" active={sortBy === "mostPlayed"} onClick={() => setSortBy("mostPlayed")} />
+        <Dropdown
+          item
+          options={[
+            { key: 0, text: "Show All Clips", value: false },
+            { key: 1, text: "Show Just My Favorites", value: true },
+          ]}
+          value={onlyFavorites}
+          onChange={(e, {value}) => setOnlyFavorites(value)}
+        />
+        <Dropdown
+          item
+          options={[
+            { key: 0, text: "Sort by Last Played", value: "lastPlayed" },
+            { key: 1, text: "Sort by Clip Name", value: "clipName" },
+            { key: 2, text: "Sort by Newest", value: "newest" },
+            { key: 3, text: "Sort by Most Played", value: "mostPlayed" },
+          ]}
+          value={sortBy}
+          onChange={(e, {value}) => setSortBy(value)}
+        />
         <Menu.Item content="" disabled />
         <Menu.Item active={groupByUser} onClick={() => setGroupByUser(!groupByUser)}>
           <Checkbox label="Group by user" checked={groupByUser} />

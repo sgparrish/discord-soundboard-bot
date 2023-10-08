@@ -13,7 +13,7 @@ class SpeechToText {
     const modelDir = Config.voskModel;
 
     if (!fs.existsSync(modelDir)) {
-      Logger.warn("Vosk model not found. Download from https://alphacephei.com/vosk/models");
+      Logger.warn(`Vosk model '${modelDir}' not found. Download from https://alphacephei.com/vosk/models`);
     } else {
       this.model = new vosk.Model(modelDir);
       Persistence.on(Persistence.events.recording.create.success, this.getTextForRecording.bind(this));

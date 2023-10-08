@@ -19,6 +19,10 @@ app.use(compression());
 app.use(express.json());
 
 // setup routes
+app.get("/", (req, res) => {
+  res.redirect("/play");
+});
+
 app.use(express.static("dist"));
 app.use(require("./routes"));
 app.all("*", (req, res) => {

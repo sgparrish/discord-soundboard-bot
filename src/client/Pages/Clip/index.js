@@ -1,6 +1,6 @@
-import React, { useCallback, useState, useEffect } from "react";
+import React, { useCallback, useState } from "react";
 import { useSelector } from "react-redux";
-import { useHistory } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 import ClipInterface from "./ClipInterface";
 import Transcript from "./Transcript";
@@ -33,14 +33,15 @@ const createClip = (id, name, start, end, successCallback, failCallback) => {
 };
 // #endregion
 
-const ClipPage = ({ match }) => {
-  useRecording(match?.params?.recordingId);
+const ClipPage = () => {
+  const params = useParams()
+  useRecording(params?.recordingId);
   // this only loads if there's no recordingId specified
-  useInitialRecordings(match?.params?.recordingId);
+  useInitialRecordings(params?.recordingId);
 
   const recordings = useSelector((state) => state.recordings);
-  let recording = useSelector((state) => state.recording) || recordings.find((x) => x.id === match.params.recordingId);
-  if (match?.params?.recordingId !== recording?.id) recording = undefined;
+  let recording = useSelector((state) => state.recording) || recordings.find((x) => x.id === params?.recordingId);
+  if (params?.recordingId !== recording?.id) recording = undefined;
 
   // #region RecordingLoading
   const loadingRecordingsTop = useSelector((state) => state.loadingRecordingsTop);
@@ -52,12 +53,12 @@ const ClipPage = ({ match }) => {
   // #endregion
 
   // #region RecordingCallback
-  const history = useHistory();
+  const navigate = useNavigate();
   const clipRecording = React.useCallback(
     ({ id }) => {
-      history.push(`/clip/${id}`);
+      navigate(`/clip/${id}`);
     },
-    [history]
+    [navigate]
   );
   // #endregion
 

@@ -39,18 +39,6 @@ button.ui.button {
   background-color: rgba(0,0,0,.15) !important;
 }
 
-.soundboard-page .menu > .item.label, .soundboard-page .menu > .item.label:hover {
-  color: white !important;
-  background-color: rgba(0,0,0,.8) !important;
-  margin-left: 2rem;
-}
-
-@media (max-width: 1250px) {
-  .soundboard-page .menu > .item.label, .soundboard-page .menu > .item.label:hover {
-    margin-left: 0;
-  }
-}
-
 .clip-card .button:not(:first-child) {
   flex-grow: 0;
 }
@@ -88,11 +76,6 @@ img.user-image {
 
 .ui.comments > .comment {
   overflow: visible;
-}
-
-.ui.comments > .comment .discriminator {
-  color: rgba(0,0,0,.4);
-  font-size: 0.8em;
 }
 
 .ui.comments > .comment > .avatar > img {

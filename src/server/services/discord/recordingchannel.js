@@ -105,7 +105,7 @@ class RecordingChannel extends BaseDiscordService {
 
     return new EmbedBuilder()
       .setAuthor({
-        name: `${member.displayName}#${member.user.discriminator}`,
+        name: member.displayName,
         iconURL: member.displayAvatarURL({ format: "png", dynamic: false, size: 32 }),
       })
       .setColor(this.STATUS_COLORS[recording.status])

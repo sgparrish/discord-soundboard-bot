@@ -1,0 +1,10 @@
+node_modules
+*.log
+.env
+
+dist
+data
+
+.gitignore
+.env.sample
+.eslintrc.json

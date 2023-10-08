@@ -1,11 +1,11 @@
 const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
-const CleanWebpackPlugin = require("clean-webpack-plugin");
+const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 
 const outputDirectory = "dist";
 
 module.exports = {
-  entry: ["babel-polyfill", "./src/client/index.js"],
+  entry: "./src/client/index.js",
   output: {
     path: path.join(__dirname, outputDirectory),
     filename: "bundle.js",
@@ -26,7 +26,12 @@ module.exports = {
       },
       {
         test: /\.(png|woff|woff2|eot|ttf|svg)$/,
-        loader: "url-loader?limit=100000",
+        use: {
+          loader: "url-loader",
+          options: {
+            limit: 100000
+          }
+        }
       },
     ],
   },
@@ -38,11 +43,11 @@ module.exports = {
     open: true,
     historyApiFallback: true,
     proxy: {
-      "/api": "http://localhost:8080",
+      "/api": "http://127.0.0.1:8080/",
     },
   },
   plugins: [
-    new CleanWebpackPlugin([outputDirectory]),
+    new CleanWebpackPlugin(),
     new HtmlWebpackPlugin({
       template: "./public/index.html",
     }),

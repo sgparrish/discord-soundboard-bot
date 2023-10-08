@@ -1,0 +1,7 @@
+/usr/src/app/data/soundboard.log {
+  missingok
+  size 10m
+  daily
+  create 600 root root
+  rotate 7
+}
