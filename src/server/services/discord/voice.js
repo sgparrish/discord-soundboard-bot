@@ -126,7 +126,7 @@ class DiscordVoice extends BaseDiscordService {
     );
   }
 
-  async _recordSound(userId) {
+  _recordSound(userId) {
     const start = this.connection.receiver.speaking.users.get(userId);
 
     const opusStream = this.connection.receiver.subscribe(userId, {
@@ -136,9 +136,6 @@ class DiscordVoice extends BaseDiscordService {
       },
     });
 
-/*     const oggDemuxer = new opus.OggDemuxer();
-    const oggDecoder = new opus.Decoder({ rate: 48000, channels: 2, frameSize: 960 })
- */
     // ogg is an opus container
     const oggStream = new opus.OggLogicalBitstream({
       opusHead: new opus.OpusHead({
@@ -156,7 +153,7 @@ class DiscordVoice extends BaseDiscordService {
     });
 
     const outPath = path.join(this.recordingDir, userId);
-    await mkdir(outPath, { recursive: true });
+    mkdirSync(outPath, { recursive: true });
     const filename = path.join(outPath, `${start}.mp3`);
 
     // opus => ogg => mp3 => file
