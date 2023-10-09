@@ -14,7 +14,7 @@ const app = express();
 const server = http.createServer(app);
 
 // setup middleware
-app.use(pinoHttp({ logger: Logger, useLevel: Config.logLevel }));
+app.use(pinoHttp({ logger: Logger, useLevel: "info" }));
 app.use(compression());
 app.use(express.json());
 
