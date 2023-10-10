@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
-import { Checkbox, Container, Dropdown, Menu } from "semantic-ui-react";
+import { Checkbox, Container, Dropdown, Input, Menu } from "semantic-ui-react";
 import useCookie from "react-use-cookie";
 
 import ClipCardGroup from "./ClipCardGroup";
@@ -59,9 +59,19 @@ const SoundboardPage = () => {
   const [onlyFavorites, setOnlyFavorites] = useState(favorites.length > 0);
   const [sortBy, setSortBy] = useState("lastPlayed");
   const [groupByUser, setGroupByUser] = useState(false);
+  const [search, setSearch] = useState("");
 
   const clips = useMemo(() => {
-    const filteredClips = allClips.filter((x) => !onlyFavorites || isFavorite(x));
+    const filteredClips = allClips
+      .filter((x) => !onlyFavorites || isFavorite(x))
+      .filter((x) => {
+        const searchTokens = search.split(" ").filter((y) => y.length >= 1);
+        if (searchTokens.length === 0) return true;
+        const fields = [x.filename];
+        if (x.member) fields.push(x.member.name);
+        else fields.push(x.category);
+        return searchTokens.every((y) => fields.some((z) => z.includes(y)));
+      });
 
     filteredClips.sort((a, b) => {
       const aVector = [];
@@ -130,6 +140,14 @@ const SoundboardPage = () => {
   return (
     <Container className="soundboard-page" fluid>
       <Menu secondary stackable>
+        <Menu.Item>
+          <Input
+            action={search ? { icon: "close", onClick: () => setSearch("") } : { icon: "search", disabled: true }}
+            placeholder="Search"
+            onChange={(e, { value }) => setSearch(value)}
+            value={search}
+          />
+        </Menu.Item>
         <Dropdown
           item
           options={[
@@ -137,7 +155,7 @@ const SoundboardPage = () => {
             { key: 1, text: "Show Just My Favorites", value: true },
           ]}
           value={onlyFavorites}
-          onChange={(e, {value}) => setOnlyFavorites(value)}
+          onChange={(e, { value }) => setOnlyFavorites(value)}
         />
         <Dropdown
           item
@@ -148,9 +166,8 @@ const SoundboardPage = () => {
             { key: 3, text: "Sort by Most Played", value: "mostPlayed" },
           ]}
           value={sortBy}
-          onChange={(e, {value}) => setSortBy(value)}
+          onChange={(e, { value }) => setSortBy(value)}
         />
-        <Menu.Item content="" disabled />
         <Menu.Item active={groupByUser} onClick={() => setGroupByUser(!groupByUser)}>
           <Checkbox label="Group by user" checked={groupByUser} />
         </Menu.Item>
