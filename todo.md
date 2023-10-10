@@ -2,7 +2,7 @@
 1. ~~Add temporary configs~~
 2. ~~Switch to pino logging~~
 3. ~~Containerize?~~
-4. Add search to web app
+4. ~~Add search to web app~~
 5. Investigiate rate limiting
 6. Expand admin panel
    1. Select which server bot operates on
