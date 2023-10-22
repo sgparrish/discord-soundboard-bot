@@ -56,7 +56,7 @@ export const useWebSocketActions = () => {
   useEffect(() => {
     const connect = () => {
       dispatch({ type: "ws/connect" });
-      const ws = new WebSocket(`ws://${window.location.origin }`);
+      const ws = new WebSocket(`ws://${window.location.host}`);
       ws.onopen = (evt) => {
         dispatch({ type: "ws/open" });
       };
