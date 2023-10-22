@@ -56,7 +56,7 @@ export const useWebSocketActions = () => {
   useEffect(() => {
     const connect = () => {
       dispatch({ type: "ws/connect" });
-      const ws = new WebSocket("ws://localhost:8080");
+      const ws = new WebSocket(`ws://${window.location.origin }`);
       ws.onopen = (evt) => {
         dispatch({ type: "ws/open" });
       };
