@@ -1,4 +1,6 @@
 # discord-soundboard-bot
+## TODO: update this readme, it's currently lying
+
 ## About
 This is a silly discord bot I made for my discord server. It allows you to upload sounds as you please and play them back into discord via a web interface.
 
